@@ -3,6 +3,7 @@
 
 from replication_utils import *
 import memsql_database
+import sys
 
 args = parse_commandline()
 
@@ -20,15 +21,15 @@ memsql_conn = connect_to_memsql(args)
 memsql_conn.execute('DROP DATABASE IF EXISTS ' + args.db)
 memsql_conn.execute('CREATE DATABASE ' + args.db)
 memsql_conn.execute('USE ' + args.db)
+memsql_conn.set_print_queries(True)
 
 # Reads the binlog and executes the retrieved queries in MemSQL
 for binlogevent in stream:
         queries = process_binlogevent(binlogevent)
         # Runs the queries in MemSQL
         for q in queries:
-                print q[0], q[1]
                 try:
-                        memsql_conn.execute(q[0], *q[1])
+                    memsql_conn.execute(q[0], *q[1])
                 except Exception as e:
                         print 'error:', e
 stream.close()

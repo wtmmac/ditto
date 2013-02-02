@@ -37,8 +37,8 @@ class Connection(object):
     Cursors are hidden by the implementation, but other than that, the methods
     are very similar to the DB-API.
 
-    We explicitly set the timezone to UTC and the character encoding to
-    UTF-8 on all connections to avoid time zone and encoding errors.
+    We explicitly set character encoding to UTF-8 on all connections to avoid
+    encoding errors.
     """
     def __init__(self, host, database, user=None, password=None,
                  max_idle_time=7*3600, convert=False, isMySQL = False):
@@ -49,10 +49,9 @@ class Connection(object):
         self.print_results = False
 
         sys_vars = dict(
-                time_zone =             "+0:00",
-                sql_mode =              "STRICT_ALL_TABLES",
                 character_set_server =  "utf8",
-                collation_server =      "utf8_general_ci",)
+                collation_server =      "utf8_general_ci",
+                )
         args = dict(db=database)
 
         from MySQLdb.converters import conversions

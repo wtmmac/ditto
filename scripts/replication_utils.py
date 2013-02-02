@@ -8,8 +8,6 @@ from pymysqlreplication.event import *
 
 import argparse
 import datetime
-import pytz
-import os
 
 def fix_object(value):
 
@@ -43,51 +41,54 @@ def parse_commandline():
 
         return parser.parse_args()
 
+def get_mysql_settings(args):
+    mysql_settings = dict((k, v) for (k, v) in vars(args).items() if v) # Removes all blank values
+    mysql_settings.pop('memsql_port')
+    mysql_settings['port'] = mysql_settings.pop('mysql_port') # Changes mysql-port (always has a value) key to port
+    return mysql_settings
+
+def get_memsql_settings(args):
+    return {'host': args.host+':'+str(args.memsql_port), 'user': args.user,
+            'database': '', 'password': args.passwd}
+
 def connect_to_mysql_stream(args):
-        """Returns an iterator through the latest MySQL binlog
+    """Returns an iterator through the latest MySQL binlog
 
-        Expects that the `args' argument was obtained from the
-        parse_commandline() function (or something very similar)
-        """
+    Expects that the `args' argument was obtained from the
+    parse_commandline() function (or something very similar)
+    """
 
-        mysql_settings = dict((k, v) for (k, v) in vars(args).items() if v) # Removes all blank values
-        mysql_settings.pop('memsql_port')
-        mysql_settings['port'] = mysql_settings.pop('mysql_port') # Changes mysql-port (always has a value) key to port
-        ##server_id is your slave identifier. It should be unique
-        ##blocking: True if you want to block and wait for the next event at the end of the stream
+    mysql_settings = get_mysql_settings(args)
 
-        stream = BinLogStreamReader(connection_settings = mysql_settings,
-                        server_id = 3, blocking = False, only_events =
-                        [DeleteRowsEvent, WriteRowsEvent, UpdateRowsEvent, QueryEvent])
+    ##server_id is your slave identifier. It should be unique
+    ##blocking: True if you want to block and wait for the next event at the end of the stream
+    stream = BinLogStreamReader(connection_settings = mysql_settings,
+                    server_id = 3, blocking = False, only_events =
+                    [DeleteRowsEvent, WriteRowsEvent, UpdateRowsEvent, QueryEvent])
 
-        return stream
+    return stream
 
 def connect_to_memsql(args):
-        """Connects to a MemSQL instance to replicate to
+    """Connects to a MemSQL instance to replicate to
 
-        Expects that the `args' argument was obtained from the
-        parse_commandline() function (or something very similar)
-        """
+    Expects that the `args' argument was obtained from the
+    parse_commandline() function (or something very similar)
+    """
 
-        memsql_settings = {'host': args.host+':'+str(args.memsql_port), 'user': args.user,
-                'database': '', 'password': args.passwd}
-        memsql_conn = memsql_database.Connection(**memsql_settings)
+    memsql_settings = get_memsql_settings(args)
+    memsql_conn = memsql_database.Connection(**memsql_settings)
 
-        # If a database was specified, it creates the database in MemSQL
-        # if it doesn't exist. Otherwise, it creates and uses the database
-        # mysql_replicated
-        if args.db:
-            memsql_conn.execute('CREATE DATABASE IF NOT EXISTS ' + args.db)
-            memsql_conn.execute('USE ' + args.db)
-        else:
-            memsql_conn.execute('CREATE DATABASE IF NOT EXISTS mysql_replicated')
-            memsql_conn.execute('USE mysql_replicated')
+    # If a database was specified, it creates the database in MemSQL
+    # if it doesn't exist. Otherwise, it creates and uses the database
+    # mysql_replicated
+    if args.db:
+        memsql_conn.execute('CREATE DATABASE IF NOT EXISTS ' + args.db)
+        memsql_conn.execute('USE ' + args.db)
+    else:
+        memsql_conn.execute('CREATE DATABASE IF NOT EXISTS mysql_replicated')
+        memsql_conn.execute('USE mysql_replicated')
 
-        # We need to set the timezone to GMT to prevent python from change
-        # datetime values
-        os.environ['TZ'] = '0'
-
-        return memsql_conn
+    return memsql_conn
 
 def process_binlogevent(binlogevent):
         """Extracts the query/queries from the given binlogevent"""
@@ -98,11 +99,11 @@ def process_binlogevent(binlogevent):
 
         if isinstance(binlogevent, QueryEvent):
             if binlogevent.query != 'BEGIN': # BEGIN events don't matter
-                queries.append( (binlogevent.query + ';', []) )
+                queries.append( (binlogevent.query, []) )
         else:
             for row in binlogevent.rows:
                 if isinstance(binlogevent, WriteRowsEvent):
-                    query = ('INSERT INTO {0}({1}) VALUES ({2});'.format(
+                    query = ('INSERT INTO {0}({1}) VALUES ({2})'.format(
                                 binlogevent.table,
                                 ', '.join(map(str, row['values'].keys())),
                                 ', '.join(['%s'] * len(row['values']))
@@ -110,14 +111,14 @@ def process_binlogevent(binlogevent):
                                 map(fix_object, row['values'].values())
                             )
                 elif isinstance(binlogevent, DeleteRowsEvent):
-                    query = ('DELETE FROM {0} WHERE {1};'.format(
+                    query = ('DELETE FROM {0} WHERE {1}'.format(
                                 binlogevent.table,
                                 ' AND '.join(map(compare_items, row['values'].items()))
                                 ),
                                 map(fix_object, row['values'].values())
                             )
                 elif isinstance(binlogevent, UpdateRowsEvent):
-                    query = ('UPDATE {0} SET {1} WHERE {2};'.format(
+                    query = ('UPDATE {0} SET {1} WHERE {2}'.format(
                                 binlogevent.table,
                                 ', '.join([str(k)+'=%s' for k in row['after_values'].keys()]),
                                 ' AND '.join(map(compare_items, row['before_values'].items()))

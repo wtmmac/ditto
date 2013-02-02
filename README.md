@@ -78,4 +78,5 @@ The scripts directory also contains ``test_replication.py``. This script will
 replicate a specific database from MySQL to MemSQL using the current binlog and
 then verify that the content of all tables in the MySQL database match those in
 the newly created MemSQL database. It can be run in the same manner as
-``mysql_memsql_replication.py``.
+``mysql_memsql_replication.py``, however a database must be specified with the
+``--db`` flag.

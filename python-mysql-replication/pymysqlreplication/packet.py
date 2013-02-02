@@ -144,7 +144,7 @@ class BinLogPacketWrapper(object):
         elif size == 3:
             # Taken from http://stackoverflow.com/questions/3783677/how-to-read-integers-from-a-file-that-are-24bit-and-little-endian-using-python
             bytes = self.read(size)
-            struct.unpack('>i', bytes + ('\0' if bytes[2] < '\x80' else '\xff'))[0]
+            return struct.unpack('>i', bytes + ('\0' if bytes[2] < '\x80' else '\xff'))[0]
         elif size == 4:
             return struct.unpack('>i', self.read(size))[0]
         elif size == 8:
