@@ -6,6 +6,8 @@ from pymysql.constants.COMMAND import *
 from pymysql.util import byte2int, int2byte
 from .packet import BinLogPacketWrapper
 from .constants.BINLOG import TABLE_MAP_EVENT
+from row_event import RowsEvent
+from event import QueryEvent
 
 
 class BinLogStreamReader(object):
@@ -100,11 +102,20 @@ class BinLogStreamReader(object):
             return binlog_event.event
 
     def __filter_event(self, event):
-        if self.__only_events is not None:
+        # If it's a RowsEvent or QueryEvent, the event database must match the
+        # connection database
+        if isinstance(event, RowsEvent) and \
+                self.__connection_settings['db'] != self.table_map[event.table_id].schema:
+                    return True
+        elif isinstance(event, QueryEvent) and \
+                self.__connection_settings['db'] != event.schema:
+                    return True
+        elif self.__only_events is not None:
             for allowed_event in self.__only_events:
                 if isinstance(event, allowed_event):
                     return False
             return True
+
         return False
 
     def __iter__(self):

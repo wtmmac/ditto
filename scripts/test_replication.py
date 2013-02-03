@@ -7,20 +7,9 @@ import sys
 
 args = parse_commandline()
 
-# Since we are comparing results from a specific database, the user must
-# specify a database
-if not args.db:
-    print 'A database must be specified with the --db flag'
-    sys.exit(1)
-
-stream = connect_to_mysql_stream(args)
+stream = connect_to_mysql_stream(args, blocking=False)
 memsql_conn = connect_to_memsql(args)
 
-# Resets the database in memsql -- just in case the database isn't empty,
-# so we only look at tables that were created in this run of the program
-memsql_conn.execute('DROP DATABASE IF EXISTS ' + args.db)
-memsql_conn.execute('CREATE DATABASE ' + args.db)
-memsql_conn.execute('USE ' + args.db)
 memsql_conn.set_print_queries(True)
 
 # Reads the binlog and executes the retrieved queries in MemSQL
@@ -36,7 +25,7 @@ stream.close()
 
 # Compares the MySQL data to the MemSQL data
 mysql_settings = {'host': args.host+':'+str(args.mysql_port), 'user': args.user,
-        'database': args.db, 'password': args.passwd}
+        'database': args.database, 'password': args.password}
 mysql_conn = memsql_database.Connection(**mysql_settings)
 
 tables = []
