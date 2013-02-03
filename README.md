@@ -1,18 +1,17 @@
-MemRep
+Ditto
 ============================================
 
-This project allows you to easily replicate your existing MySQL data into
+Ditto is a tool that lets you easily replicate your existing MySQL data into
 MemSQL.
 
 Dependencies
 ============
-MemRep depends on the following software:
+Ditto depends on the following software:
 
 * MySQL 5.5 (5.6 is not supported)
 * Python 2.7
-* MemSQL 1.\*
-* MySQL-Python 1.2
-* pytz 2012
+* MemSQL
+* MySQL-Python
 
 
 Installation
@@ -20,8 +19,7 @@ Installation
 
 The replication scripts come bundled with a modified version of the
 [python-mysql-replication](https://github.com/noplay/python-mysql-replication)
-library that must be installed before we can run the replication script. The
-
+library that must be installed before we can replicate.
 
 Enter the python-mysql-replication directory:
 
@@ -79,4 +77,5 @@ replicate a specific database from MySQL to MemSQL using the current binlog and
 then verify that the content of all tables in the MySQL database match those in
 the newly created MemSQL database. It can be run in the same manner as
 ``mysql_memsql_replication.py``, however a database must be specified with the
-``--db`` flag.
+``--db`` flag. To print out all queries in the binlog, run the
+``dump_events.py`` script.
