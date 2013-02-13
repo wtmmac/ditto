@@ -1,6 +1,7 @@
 import struct
 from pymysql.constants import FIELD_TYPE
 from pymysql.util import byte2int, int2byte 
+import csv
 
 class Column(object):
     '''Definition of a column'''
@@ -47,8 +48,10 @@ class Column(object):
             self.max_length = (((metadata >> 4) & 0x300) ^ 0x300) + (metadata & 0x00ff)
 
     def __read_enum_metadata(self, column_schema):
+        # Creates a csv dialect for parsing column schema strings
+        csv.register_dialect('column_schema', quotechar="'", doublequote="''")
         enums = column_schema["COLUMN_TYPE"]
         if self.type == FIELD_TYPE.ENUM:
-            self.enum_values = enums.replace('enum(', '').replace(')', '').replace('\'', '').split(',')
+            self.enum_values = csv.reader([enums[5:-1]], dialect='column_schema').next()
         else:
-            self.set_values = enums.replace('set(', '').replace(')', '').replace('\'', '').split(',')
+            self.set_values = csv.reader([enums[4:-1]], dialect='column_schema').next()

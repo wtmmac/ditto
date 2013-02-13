@@ -55,9 +55,10 @@ number of settings you can tweak at the command line:
 
     $ python replicate.py --help
 
+
     usage: replicate.py [-h] [--host HOST] [--user USER] [--password PASSWORD]
                         [--mysql-port MYSQL_PORT] [--memsql-port MEMSQL_PORT]
-                        [--sql_mode SQL_MODE] [--no-dump] [--no-flush]
+                        [--no-dump] [--no-flush]
                         database
 
     Replicate a MySQL database to MemSQL
@@ -74,7 +75,6 @@ number of settings you can tweak at the command line:
                             MySQL port to use
     --memsql-port MEMSQL_PORT
                             MemSQL port to use
-    --sql_mode SQL_MODE   SQL_MODE to use
     --no-dump             Don't run mysqldump before reading (expects schema to
                             already be set up)
     --no-flush            Don't flush the binlog before reading (may duplicate

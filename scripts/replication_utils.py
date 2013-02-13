@@ -40,7 +40,6 @@ def parse_commandline():
         parser.add_argument('--password', dest='password', type=str, help='Password to use', default='')
         parser.add_argument('--mysql-port', dest='mysql_port', type=int, help='MySQL port to use', default=3307)
         parser.add_argument('--memsql-port', dest='memsql_port', type=int, help='MemSQL port to use', default=3306)
-        parser.add_argument('--sql_mode', dest='sql_mode', type=str, help='SQL_MODE to use', default=None)
         parser.add_argument('--no-dump', dest='no_dump', action='store_true',
                 default=False, help="Don't run mysqldump before reading (expects schema to already be set up)")
         parser.add_argument('--no-flush', dest='no_flush', action='store_true',
@@ -51,8 +50,7 @@ def parse_commandline():
 
 def get_mysql_settings(args):
     return {'host':args.host, 'user':args.user, 'passwd':args.password,
-            'db': args.database, 'port':args.mysql_port, 'sql_mode':args.sql_mode
-            }
+            'db': args.database, 'port':args.mysql_port}
 
 def get_memsql_settings(args):
     return {'host': args.host+':'+str(args.memsql_port), 'user': args.user,

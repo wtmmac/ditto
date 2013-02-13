@@ -1,6 +1,7 @@
 import struct
 import decimal
 import datetime
+import csv
 
 from .event import BinLogEvent
 from pymysql.util import byte2int, int2byte
@@ -58,7 +59,7 @@ class RowsEvent(BinLogEvent):
                     values[name] = struct.unpack("<i", self.packet.read(4))[0]
             elif column.type == FIELD_TYPE.INT24:
                 if unsigned:
-                    values[name] = self.packet.read_uint24()                    
+                    values[name] = self.packet.read_uint24()
                 else:
                     values[name] = self.packet.read_int24()
             elif column.type == FIELD_TYPE.FLOAT:
@@ -92,7 +93,12 @@ class RowsEvent(BinLogEvent):
             elif column.type == FIELD_TYPE.ENUM:
                 values[name] = column.enum_values[self.packet.read_uint_by_size(column.size) - 1]
             elif column.type == FIELD_TYPE.SET:
-                values[name] = column.set_values[self.packet.read_uint_by_size(column.size) - 1]
+                # reads a bitmask of the set items to include (ex. 1101 would
+                # mean the first, third, and fourth items)
+                bytes = self.packet.read_uint_by_size(column.size)
+                bits = [1 if digit=='1' else 0 for digit in bin(bytes)[2:]]
+                bits.reverse()
+                values[name] = ','.join([column.set_values[i] for i,b in enumerate(bits) if b==1])
             elif column.type == FIELD_TYPE.BIT:
                 values[name] = self.__read_bit(column)
             elif column.type == FIELD_TYPE.GEOMETRY:

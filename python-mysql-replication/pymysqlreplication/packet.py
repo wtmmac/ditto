@@ -141,10 +141,10 @@ class BinLogPacketWrapper(object):
             return struct.unpack('>b', self.read(size))[0]
         elif size == 2:
             return struct.unpack('>h', self.read(size))[0]
+        # Taken from http://stackoverflow.com/questions/3783677/how-to-read-integers-from-a-file-that-are-24bit-and-little-endian-using-python, modified for big-endian integers
         elif size == 3:
-            # Taken from http://stackoverflow.com/questions/3783677/how-to-read-integers-from-a-file-that-are-24bit-and-little-endian-using-python
             bytes = self.read(size)
-            return struct.unpack('>i', bytes + ('\0' if bytes[2] < '\x80' else '\xff'))[0]
+            return struct.unpack('>i', ('\0' if bytes[2] < '\x80' else '\xff') + bytes)[0]
         elif size == 4:
             return struct.unpack('>i', self.read(size))[0]
         elif size == 8:
@@ -153,7 +153,7 @@ class BinLogPacketWrapper(object):
     def read_uint_by_size(self, size):
         '''Read a little endian integer values based on byte number'''
         if size == 1:
-            return self.read_uint8() 
+            return self.read_uint8()
         elif size == 2:
             return self.read_uint16()
         elif size == 3:
@@ -174,17 +174,10 @@ class BinLogPacketWrapper(object):
         length = self.read_uint_by_size(size)
         return self.read(length)
 
+    # Taken from http://stackoverflow.com/questions/3783677/how-to-read-integers-from-a-file-that-are-24bit-and-little-endian-using-python
     def read_int24(self):
-        a, b, c = struct.unpack("BBB", self.read(3))
-        if a & 128:
-            return a + (b << 8) + (c << 16)
-
-        else:
-            return (a + (b << 8) + (c << 16)) * -1
-
-    def read_uint24(self, unsigned = False):
-        a, b, c = struct.unpack("BBB", self.read(3))
-        return a + (b << 8) + (c << 16)
+        bytes = self.read(3)
+        return struct.unpack('<i', bytes + ('\0' if bytes[2] < '\x80' else '\xff'))[0]
 
     def read_uint8(self):
         return struct.unpack('<B', self.read(1))[0]
@@ -192,9 +185,8 @@ class BinLogPacketWrapper(object):
     def read_uint16(self):
         return struct.unpack('<H', self.read(2))[0]
 
-    def read_uint24(self):
-      a, b, c = struct.unpack("<BBB", self.read(3))
-      return a + (b << 8) + (c << 16)
+    def read_uint24(self, unsigned = False):
+        return struct.unpack('<I', self.read(3) + '\0')[0]
 
     def read_uint32(self):
         return struct.unpack('<I', self.read(4))[0]
