@@ -87,3 +87,22 @@ database match those in the newly created MemSQL database. It can be run in the
 same manner as ``replicate.py``, though it is not intended for replication, as
 it doesn't wait for new queries on the current binlog. To print out all queries
 in the current binlog, run the ``dump_queries.py`` script.
+
+Licence
+=========
+
+Copyright 2013 MemSQL, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License.  You may obtain a copy of the
+License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed
+under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations under the License.
+
+The ``memsql_database.py`` file is a modified version of the original file that
+is part of Facebook's Tornado project.
